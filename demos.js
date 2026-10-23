@@ -148,7 +148,13 @@ window.DEMOS = {
     const stage = h("div", { class: "pet-stage" });
     const shelf = h("div", { class: "pet-shelf", "aria-hidden": "true" });
     ["petlift", "clackers", "moor", "lookalike"].forEach(n => shelf.append(h("img", { src: `assets/icons/${n}.webp`, alt: "" })));
-    const pup = h("button", { class: "pet-pup", type: "button", "aria-label": "Tap the dog to make it jump" }, h("img", { src: "assets/photo/beagle.webp", alt: "" }));
+    const glyphs = {
+      folder: '<svg viewBox="0 0 64 64"><path d="M12 22a4 4 0 0 1 4-4h11l4 4h17a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4z" fill="#d9eeff"/></svg>',
+      mail: '<svg viewBox="0 0 64 64"><rect x="13" y="20" width="38" height="25" rx="4" fill="#fff"/><path d="M14 22l18 13 18-13" fill="none" stroke="#2f86ee" stroke-width="3"/></svg>',
+      notes: '<svg viewBox="0 0 64 64"><rect x="14" y="13" width="36" height="38" rx="5" fill="#fffbe9"/><path d="M20 26h24M20 33h24M20 40h16" stroke="#c9a136" stroke-width="3" stroke-linecap="round"/></svg>',
+    };
+    Object.entries(glyphs).forEach(([n, svg]) => { const g = h("span", { class: `g ${n}` }); g.innerHTML = svg; shelf.append(g); });
+    const pup = h("button", { class: "pet-pup", type: "button", "aria-label": "Tap the puppy to make it jump" }, h("img", { src: "assets/photo/puppy.webp", alt: "" }));
     const shade = h("span", { class: "pet-shade", "aria-hidden": "true" });
     const heart = h("span", { class: "pet-heart", "aria-hidden": "true" });
     heart.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>';
@@ -156,8 +162,8 @@ window.DEMOS = {
     const img = pup.firstChild;
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Positions are fractions of the stage width; speed in widths per second.
-    let x = 0.3, v = 0, target = 0.3, wait = 1.2, stride = 0, face = 1, jumpT = -1, visible = false, last = 0, t = 0;
-    const MAX = 0.16, ACC = 0.28, LO = 0.2, HI = 0.8;
+    let x = 0.42, v = 0, target = 0.42, wait = 1.2, stride = 0, face = 1, jumpT = -1, visible = false, last = 0, t = 0;
+    const MAX = 0.14, ACC = 0.26, LO = 0.3, HI = 0.7;  // stays above the Dock
     function frame(now) {
       if (!visible) { last = 0; return; }
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016; last = now; t += dt;

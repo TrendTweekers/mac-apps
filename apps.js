@@ -84,7 +84,7 @@ window.APPS = [
     icon: "assets/icons/petlift.webp",
     demo: "pet",
     keeper: 0,
-    note: "tap the dog",
+    note: "tap the puppy",
     frames: [
       { type: "demo" },
       { type: "shot", src: "assets/shots/petlift-1.webp", alt: "Three pets standing on top of the Mac Dock." },
