@@ -158,11 +158,14 @@ window.DEMOS = {
     const shade = h("span", { class: "pet-shade", "aria-hidden": "true" });
     const heart = h("span", { class: "pet-heart", "aria-hidden": "true" });
     heart.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>';
-    stage.append(shelf, shade, pup, heart); box.append(stage);
+    const tap = h("span", { class: "pet-tap", "aria-hidden": "true" });
+    tap.innerHTML = '<svg viewBox="-16 -16 32 32"><path d="M-3.6 -3.1L-9 -10.5M0 -4V-13M3.6 -3.1L9 -10.5"/></svg>';
+    stage.append(shelf, shade, pup, heart, tap); box.append(stage);
     const img = pup.firstChild;
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Positions are fractions of the stage width; speed in widths per second.
     let x = 0.42, v = 0, target = 0.42, wait = 1.2, stride = 0, face = 1, jumpT = -1, visible = false, last = 0, t = 0;
+    let pat = 0, patLeft = false;
     const MAX = 0.14, ACC = 0.26, LO = 0.3, HI = 0.7;  // stays above the Dock
     function frame(now) {
       if (!visible) { last = 0; return; }
@@ -181,6 +184,12 @@ window.DEMOS = {
       let hop = Math.sin(Math.PI * p) * 7 * k, sx = 1, sy = 1, tilt = Math.sin(p * Math.PI * 2) * 2.5 * k;
       if (p < 0.12 || p > 0.88) { sx += 0.05 * k; sy -= 0.07 * k; } else { sx -= 0.03 * k; sy += 0.04 * k; }
       if (v === 0) { const b = Math.sin(t * 2.6); sx += 0.01 * b; sy -= 0.015 * b; }
+      // Typing: the puppy sits and pats along, one paw then the other.
+      pat = Math.max(0, pat - dt * 7);
+      if (pat > 0) { sx += 0.05 * pat; sy -= 0.085 * pat; tilt += -3 + (patLeft ? 4.5 : -4.5) * pat; }
+      tap.style.left = ((x + face * 0.082) * 100) + "%";
+      tap.style.opacity = Math.min(1, pat * 1.4);
+      tap.style.transform = `translateX(-50%) scale(${0.7 + 0.5 * (1 - pat)})`;
       if (jumpT >= 0) { jumpT += dt; const j = Math.min(1, jumpT / 0.55); hop += Math.sin(Math.PI * j) * 46; if (j >= 1) jumpT = -1; }
       pup.style.left = (x * 100) + "%";
       shade.style.left = (x * 100) + "%";
@@ -208,6 +217,14 @@ window.DEMOS = {
         { opacity: 1, transform: "translateY(-14px) scale(.9)", offset: 0.2 },
         { opacity: 0, transform: "translateY(-60px) scale(1.2)" },
       ], { duration: 1200, easing: "cubic-bezier(.16,1,.3,1)" });
+    });
+    // Typing anywhere on the page while the scene is on screen. A key press
+    // is the visitor's own action, so it plays with reduced motion too.
+    document.addEventListener("keydown", e => {
+      if (!visible || e.repeat || ["Shift", "Control", "Alt", "Meta"].includes(e.key)) return;
+      if (e.target.closest && e.target.closest("input,textarea,[contenteditable]")) return;
+      v = 0; target = x; wait = Math.max(wait, 1.6);
+      pat = 1; patLeft = !patLeft;
     });
     if (still) wait = Infinity;
     new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; if (visible) requestAnimationFrame(frame); }), { threshold: 0.2 }).observe(stage);
