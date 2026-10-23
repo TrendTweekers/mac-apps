@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://trendtweekers.github.io/mac-apps/sitemap.xml

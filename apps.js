@@ -91,7 +91,27 @@ window.APPS = [
       { type: "shot", src: "assets/shots/petlift-2.webp", alt: "A puppy lifted out of a photo by PetLift." },
     ],
   },
+  {
+    id: "clickcast",
+    name: "Clickcast",
+    full: "Clickcast: Cursor & Keystrokes",
+    line: "Highlights your pointer, rings every click, and shows your shortcuts on screen.",
+    detail: "For screen recordings, lessons and live demos. Works over full-screen apps.",
+    price: "Free download. Pro is $9.99, once.",
+    store: "https://apps.apple.com/app/id6826222101",
+    support: "https://trendtweekers.github.io/clickcast-app/",
+    live: false,
+    icon: "assets/icons/clickcast.webp",
+    demo: "clickcast",
+    keeper: 0,
+    note: "click + press ⌘ keys",
+    frames: [
+      { type: "demo" },
+      { type: "shot", src: "assets/shots/clickcast-1.webp", alt: "Clickcast showing Command Shift O as keycaps over a code editor." },
+      { type: "shot", src: "assets/shots/clickcast-2.webp", alt: "Clickcast spotlight dimming a slide except around the pointer." },
+    ],
+  },
 ];
 
 // Blank frames at the end of the roll: apps still to come.
-window.UNEXPOSED = 2;
+window.UNEXPOSED = 1;

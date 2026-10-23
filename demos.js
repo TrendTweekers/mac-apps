@@ -212,4 +212,73 @@ window.DEMOS = {
     if (still) wait = Infinity;
     new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; if (visible) requestAnimationFrame(frame); }), { threshold: 0.2 }).observe(stage);
   },
+
+  /* Clickcast: a ring follows the pointer inside the frame, clicks leave a
+     ring, and shortcuts pressed while the frame is on screen show as keycaps.
+     Left alone, it plays a short demo by itself. */
+  clickcast(box, app, { h }) {
+    const stage = h("div", { class: "cc-stage" });
+    stage.innerHTML = '<div class="cc-win"><div class="cc-bar"><i></i><i></i><i></i><span>lesson-3.swift</span></div>' +
+      '<pre class="cc-code"><span class="c">// Lesson 3: shortcuts</span>\n<span class="k">func</span> <span class="f">greet</span>(name: <span class="k">String</span>) {\n  print(<span class="s">"Hello!"</span>)\n}</pre></div>';
+    const ring = h("span", { class: "cc-ring", "aria-hidden": "true" });
+    const keys = h("div", { class: "cc-keys", "aria-live": "polite" });
+    stage.append(ring, keys);
+    box.append(stage);
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let x = 0.55, y = 0.45, tx = x, ty = y, visible = false, last = 0, idle = 0, script = 0, hideT = null, touched = false;
+    const NAMES = { Meta: "⌘", Control: "⌃", Alt: "⌥", Shift: "⇧" };
+    function showKeys(list) {
+      keys.innerHTML = "";
+      list.forEach((k, i) => {
+        if (i) keys.append(h("span", { class: "cc-plus", text: "+" }));
+        const mod = ["⌘", "⌃", "⌥", "⇧"].includes(k);
+        const cap = h("span", { class: "cc-cap" + (mod ? " mod" : ""), text: k });
+        keys.append(cap);
+      });
+      keys.classList.add("on");
+      clearTimeout(hideT);
+      hideT = setTimeout(() => keys.classList.remove("on"), 1500);
+    }
+    function ripple(px, py) {
+      const r = h("span", { class: "cc-ripple", "aria-hidden": "true" });
+      r.style.left = px * 100 + "%"; r.style.top = py * 100 + "%";
+      stage.append(r);
+      r.animate([{ transform: "translate(-50%,-50%) scale(.35)", opacity: 1 }, { transform: "translate(-50%,-50%) scale(1.5)", opacity: 0 }],
+        { duration: 600, easing: "cubic-bezier(.16,1,.3,1)" }).onfinish = () => r.remove();
+    }
+    stage.addEventListener("pointermove", e => {
+      const b = stage.getBoundingClientRect();
+      tx = (e.clientX - b.left) / b.width; ty = (e.clientY - b.top) / b.height; idle = 0; touched = true;
+    });
+    stage.addEventListener("pointerdown", e => {
+      const b = stage.getBoundingClientRect();
+      x = tx = (e.clientX - b.left) / b.width; y = ty = (e.clientY - b.top) / b.height; idle = 0; touched = true;
+      ripple(x, y);
+    });
+    document.addEventListener("keydown", e => {
+      if (!visible || e.repeat) return;
+      if (e.target.closest && e.target.closest("input,textarea")) return;
+      const mods = ["Control", "Alt", "Shift", "Meta"].filter(m => e.getModifierState(m)).map(m => NAMES[m]);
+      if (NAMES[e.key]) { return; }
+      if (!mods.length && e.key.length === 1) return; // shortcuts only, like the app's default
+      const k = e.key.length === 1 ? e.key.toUpperCase() : ({ Enter: "⏎", Escape: "⎋", ArrowLeft: "←", ArrowRight: "→", ArrowUp: "↑", ArrowDown: "↓", Backspace: "⌫", Tab: "⇥" }[e.key] || e.key);
+      showKeys([...mods, k]); idle = 0; touched = true;
+    });
+    const tour = [[0.3, 0.35, ["⌘", "C"]], [0.7, 0.55, ["⌘", "V"]], [0.5, 0.42, ["⌘", "⇧", "K"]]];
+    function frame(now) {
+      if (!visible) { last = 0; return; }
+      const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016; last = now; idle += dt;
+      if (!still && !touched && idle > 2.2) {
+        const [sx, sy, sk] = tour[script % tour.length]; script++; idle = 0;
+        tx = sx; ty = sy;
+        setTimeout(() => { ripple(tx, ty); showKeys(sk); }, 700);
+      }
+      if (touched && idle > 6) touched = false;  // hand back to the demo
+      const k = still ? 1 : 1 - Math.pow(0.0005, dt);  // smooth follow, frame-rate independent
+      x += (tx - x) * k; y += (ty - y) * k;
+      ring.style.left = x * 100 + "%"; ring.style.top = y * 100 + "%";
+      requestAnimationFrame(frame);
+    }
+    new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; if (visible) requestAnimationFrame(frame); }), { threshold: 0.3 }).observe(stage);
+  },
 };
