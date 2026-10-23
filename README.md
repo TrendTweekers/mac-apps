@@ -17,3 +17,7 @@ Edit `STUDIO.name` in `apps.js` and the `<title>` in `index.html`.
 ## Preview locally
 
 `python3 -m http.server 8765` in this folder, then open http://127.0.0.1:8765/
+
+## Publishing a change
+
+Bump the `?v=` number on the CSS and JS links in `index.html` (any new number). GitHub Pages lets browsers keep files for 10 minutes; a new number makes them fetch the new files at once.
