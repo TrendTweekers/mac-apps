@@ -141,26 +141,52 @@ window.DEMOS = {
     new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting && !started) { started = true; run(); } }), { threshold: .6 }).observe(stage);
   },
 
-  /* PetLift: a puppy asleep on a little Dock. Tap it and it wakes up and hops. */
+  /* PetLift: a beagle that lives on a little Dock. It wanders, stops to look
+     around, and jumps with a heart when you tap it. Same movement rules as
+     the app: eased speed, hops counted by distance. */
   pet(box, app, { h }) {
     const stage = h("div", { class: "pet-stage" });
     const shelf = h("div", { class: "pet-shelf", "aria-hidden": "true" });
     ["petlift", "clackers", "moor", "lookalike"].forEach(n => shelf.append(h("img", { src: `assets/icons/${n}.webp`, alt: "" })));
-    const pup = h("button", { class: "pet-pup is-asleep", type: "button", "aria-label": "Tap the puppy to wake it up" },
-      h("img", { src: "assets/photo/puppy.webp", alt: "" }), h("span", { class: "pet-z", "aria-hidden": "true", text: "z z z" }));
+    const pup = h("button", { class: "pet-pup", type: "button", "aria-label": "Tap the dog to make it jump" }, h("img", { src: "assets/photo/beagle.webp", alt: "" }));
+    const shade = h("span", { class: "pet-shade", "aria-hidden": "true" });
     const heart = h("span", { class: "pet-heart", "aria-hidden": "true" });
     heart.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>';
-    stage.append(shelf, pup, heart); box.append(stage);
-    let x = 22, busy = false, timer = null;
-    pup.style.left = x + "%";
+    stage.append(shelf, shade, pup, heart); box.append(stage);
+    const img = pup.firstChild;
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Positions are fractions of the stage width; speed in widths per second.
+    let x = 0.3, v = 0, target = 0.3, wait = 1.2, stride = 0, face = 1, jumpT = -1, visible = false, last = 0, t = 0;
+    const MAX = 0.16, ACC = 0.28, LO = 0.2, HI = 0.8;
+    function frame(now) {
+      if (!visible) { last = 0; return; }
+      const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016; last = now; t += dt;
+      const rem = Math.abs(target - x);
+      if (wait > 0) { wait -= dt; if (wait <= 0) { target = LO + Math.random() * (HI - LO); if (Math.abs(target - x) < 0.12) target = x > 0.5 ? LO + 0.05 : HI - 0.05; } }
+      else {
+        const brake = v * v / (2 * ACC);
+        v = rem <= brake + 0.002 ? Math.max(0, v - ACC * dt) : Math.min(MAX, v + ACC * dt);
+        const step = Math.min(rem, v * dt);
+        x += (target > x ? 1 : -1) * step; stride += step / 0.05;
+        face = target > x ? 1 : -1;
+        if (v < 0.002 && rem < 0.004) { v = 0; wait = 1.5 + Math.random() * 2.5; }
+      }
+      const k = Math.min(1, v / MAX), p = stride % 1;
+      let hop = Math.sin(Math.PI * p) * 7 * k, sx = 1, sy = 1, tilt = Math.sin(p * Math.PI * 2) * 2.5 * k;
+      if (p < 0.12 || p > 0.88) { sx += 0.05 * k; sy -= 0.07 * k; } else { sx -= 0.03 * k; sy += 0.04 * k; }
+      if (v === 0) { const b = Math.sin(t * 2.6); sx += 0.01 * b; sy -= 0.015 * b; }
+      if (jumpT >= 0) { jumpT += dt; const j = Math.min(1, jumpT / 0.55); hop += Math.sin(Math.PI * j) * 46; if (j >= 1) jumpT = -1; }
+      pup.style.left = (x * 100) + "%";
+      shade.style.left = (x * 100) + "%";
+      shade.style.transform = `translateX(-50%) scale(${1 - Math.min(0.6, hop / 80)})`;
+      img.style.transform = `translateY(${-hop}px) scale(${face * sx}, ${sy}) rotate(${tilt * face}deg)`;
+      requestAnimationFrame(frame);
+    }
     pup.addEventListener("click", () => {
-      if (busy) return;
-      busy = true; clearTimeout(timer);
-      pup.classList.remove("is-asleep");
-      heart.style.left = x + "%"; heart.classList.remove("go"); void heart.offsetWidth; heart.classList.add("go");
-      const target = x < 50 ? 70 : 22;
-      setTimeout(() => { pup.classList.add("is-hopping"); pup.classList.toggle("flip", target < x); pup.style.left = target + "%"; x = target; }, 380);
-      setTimeout(() => { pup.classList.remove("is-hopping"); busy = false; timer = setTimeout(() => pup.classList.add("is-asleep"), 6000); }, 2100);
+      jumpT = 0;
+      heart.style.left = (x * 100) + "%"; heart.classList.remove("go"); void heart.offsetWidth; heart.classList.add("go");
     });
+    if (still) { pup.style.left = "50%"; shade.style.left = "50%"; return; }
+    new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; if (visible) requestAnimationFrame(frame); }), { threshold: 0.2 }).observe(stage);
   },
 };

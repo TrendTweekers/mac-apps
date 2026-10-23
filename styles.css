@@ -382,23 +382,15 @@ a.store:active { transform: translateY(0); }
 .pet-shelf img { width: clamp(26px, 2.6vw, 36px); height: auto; display: block; }
 .pet-pup {
   position: absolute; bottom: calc(8% + clamp(30px, 2.9vw, 40px));
-  width: 26%; padding: 0; border: 0; background: none; cursor: pointer;
+  width: 14%; padding: 0; border: 0; background: none; cursor: pointer;
   transform: translateX(-50%);
-  transition: left 1.6s linear;
   -webkit-tap-highlight-color: transparent;
 }
-.pet-pup img { width: 100%; display: block; transform-origin: 50% 100%; filter: drop-shadow(0 6px 6px rgba(60, 10, 40, .35)); }
-.pet-pup.flip img { transform: scaleX(-1); }
-.pet-pup.is-asleep img { animation: breathe 3.2s ease-in-out infinite; filter: drop-shadow(0 6px 6px rgba(60, 10, 40, .35)) saturate(.85) brightness(.94); }
-.pet-pup.is-hopping img { animation: hop .4s ease-in-out infinite; }
-.pet-pup.flip.is-hopping img { animation-name: hop-flip; }
-.pet-z {
-  position: absolute; top: -6%; right: -12%;
-  font: 800 1rem/1 "Archivo", sans-serif; color: #fff; letter-spacing: .3em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
-  opacity: 0; transition: opacity .3s;
+.pet-pup img { width: 100%; display: block; transform-origin: 50% 100%; filter: drop-shadow(0 5px 5px rgba(60, 10, 40, .3)); will-change: transform; }
+.pet-shade {
+  position: absolute; bottom: calc(8% + clamp(26px, 2.6vw, 36px)); width: 11%; height: 10px; border-radius: 50%;
+  background: radial-gradient(rgba(40, 0, 30, .35), transparent 70%); transform: translateX(-50%);
 }
-.pet-pup.is-asleep .pet-z { opacity: 1; animation: zdrift 3.2s ease-in-out infinite; }
 .frame:has(.pet-stage) .mark__note { color: #fff; text-shadow: 0 1px 4px rgba(60, 10, 40, .5); }
 .pet-heart {
   position: absolute; bottom: 52%; width: 26px; height: 26px; margin-left: -13px;
@@ -406,10 +398,6 @@ a.store:active { transform: translateY(0); }
 }
 .pet-heart svg { width: 100%; height: 100%; fill: #fff; }
 .pet-heart.go { animation: heart 1.2s var(--ease-out) forwards; }
-@keyframes breathe { 50% { transform: scale(1.015, .975); } }
-@keyframes hop { 0%, 100% { transform: translateY(0) scale(1.04, .94); } 50% { transform: translateY(-18%) scale(.97, 1.05); } }
-@keyframes hop-flip { 0%, 100% { transform: scaleX(-1) translateY(0) scale(1.04, .94); } 50% { transform: scaleX(-1) translateY(-18%) scale(.97, 1.05); } }
-@keyframes zdrift { 50% { transform: translate(4px, -6px); } }
 @keyframes heart { 0% { opacity: 0; transform: translateY(0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-60px) scale(1.2); } }
 
 /* Unexposed frames */
