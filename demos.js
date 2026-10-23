@@ -168,14 +168,14 @@ window.DEMOS = {
       if (!visible) { last = 0; return; }
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016; last = now; t += dt;
       const rem = Math.abs(target - x);
-      if (wait > 0) { wait -= dt; if (wait <= 0) { target = LO + Math.random() * (HI - LO); if (Math.abs(target - x) < 0.12) target = x > 0.5 ? LO + 0.05 : HI - 0.05; } }
+      if (wait > 0) { if (!still) wait -= dt; if (wait <= 0) { target = LO + Math.random() * (HI - LO); if (Math.abs(target - x) < 0.12) target = x > 0.5 ? LO + 0.05 : HI - 0.05; } }
       else {
         const brake = v * v / (2 * ACC);
         v = rem <= brake + 0.002 ? Math.max(0, v - ACC * dt) : Math.min(MAX, v + ACC * dt);
         const step = Math.min(rem, v * dt);
         x += (target > x ? 1 : -1) * step; stride += step / 0.05;
         face = target > x ? 1 : -1;
-        if (v < 0.002 && rem < 0.004) { v = 0; wait = 1.5 + Math.random() * 2.5; }
+        if (v < 0.002 && rem < 0.004) { v = 0; wait = still ? 1 : 1.5 + Math.random() * 2.5; }
       }
       const k = Math.min(1, v / MAX), p = stride % 1;
       let hop = Math.sin(Math.PI * p) * 7 * k, sx = 1, sy = 1, tilt = Math.sin(p * Math.PI * 2) * 2.5 * k;
@@ -190,9 +190,19 @@ window.DEMOS = {
     }
     pup.addEventListener("click", () => {
       jumpT = 0;
-      heart.style.left = (x * 100) + "%"; heart.classList.remove("go"); void heart.offsetWidth; heart.classList.add("go");
+      // Reduced motion: no wandering on its own, but a tap is the visitor's
+      // own action, so the jump and one short trot still play.
+      if (still) { wait = 0; target = x > 0.5 ? LO + 0.06 : HI - 0.06; }
+      heart.style.left = (x * 100) + "%";
+      // Web Animations, not a CSS animation, so the page-wide reduced-motion
+      // rule does not cut it to zero.
+      heart.animate([
+        { opacity: 0, transform: "translateY(0) scale(.6)" },
+        { opacity: 1, transform: "translateY(-14px) scale(.9)", offset: 0.2 },
+        { opacity: 0, transform: "translateY(-60px) scale(1.2)" },
+      ], { duration: 1200, easing: "cubic-bezier(.16,1,.3,1)" });
     });
-    if (still) { pup.style.left = "50%"; shade.style.left = "50%"; return; }
+    if (still) wait = Infinity;
     new IntersectionObserver(es => es.forEach(e => { visible = e.isIntersecting; if (visible) requestAnimationFrame(frame); }), { threshold: 0.2 }).observe(stage);
   },
 };
