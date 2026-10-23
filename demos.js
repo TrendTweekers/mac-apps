@@ -1,0 +1,143 @@
+// Live demos, one per app. Each gets the frame's inner box and fills it.
+// A new app can point "demo" at one of these, add its own, or leave it out.
+window.DEMOS = {
+  /* Clackers: press the keycap (or type) and hear a real recording from the app. */
+  keycap(box, app, { h }) {
+    const packs = {
+      blue: { label: "Blue", cap: "#ef6a2b", legend: "#fff3ea", files: [0, 1, 2, 3, 4, 5, 6, 7].map(i => `assets/sound/blue_0${i}.wav`) },
+      typewriter: { label: "1946 typewriter", cap: "#2e4a3f", legend: "#e9f1ea", files: [0, 1, 2, 3, 4, 5].map(i => `assets/sound/typewriter_0${i}.wav`) },
+    };
+    let pack = "blue", ctx = null;
+    const buffers = {};
+    const stage = h("div", { class: "keycap-stage" });
+    const key = h("button", { class: "keycap", type: "button", "aria-label": "Press the key to hear Clackers" },
+      h("span", { class: "keycap__base" }), h("span", { class: "keycap__top" }), h("span", { class: "keycap__legend", text: "K" }));
+    const meter = h("div", { class: "meter", "aria-hidden": "true" });
+    const bars = Array.from({ length: 14 }, (_, i) => { const s = h("span"); s.style.height = `${6 + (7 - Math.abs(7 - i)) * .9}px`; meter.append(s); return s; });
+    const chips = h("div", { class: "packs", role: "group", "aria-label": "Sound" });
+    const paint = () => {
+      key.style.setProperty("--cap", packs[pack].cap);
+      key.style.setProperty("--legend", packs[pack].legend);
+      chips.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.p === pack)));
+    };
+    Object.entries(packs).forEach(([id, p]) => chips.append(h("button", { type: "button", "data-p": id, text: p.label, onclick: () => { pack = id; paint(); press(); } })));
+    stage.append(key, meter, chips); box.append(stage); paint();
+
+    async function load(id) {
+      if (buffers[id]) return buffers[id];
+      buffers[id] = Promise.all(packs[id].files.map(async f => ctx.decodeAudioData(await (await fetch(f)).arrayBuffer())));
+      return buffers[id];
+    }
+    let decay = null, level = 0;
+    async function press() {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended") ctx.resume();
+      key.classList.add("is-down"); setTimeout(() => key.classList.remove("is-down"), 90);
+      level = .55 + Math.random() * .4;
+      clearInterval(decay);
+      decay = setInterval(() => { level *= .78; bars.forEach((b, i) => b.classList.toggle("on", i / 14 < level)); if (level < .03) clearInterval(decay); }, 40);
+      try {
+        const list = await load(pack);
+        const src = ctx.createBufferSource(), g = ctx.createGain();
+        src.buffer = list[Math.floor(Math.random() * list.length)];
+        src.playbackRate.value = .96 + Math.random() * .08;
+        g.gain.value = .9; src.connect(g).connect(ctx.destination); src.start();
+      } catch (e) { /* sound failed to load: the key still moves */ }
+    }
+    key.addEventListener("pointerdown", e => { e.preventDefault(); press(); });
+    key.addEventListener("keydown", e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); press(); } });
+    // While the keycap is on screen, typing anywhere on the page plays it too.
+    let visible = false;
+    new IntersectionObserver(es => es.forEach(en => visible = en.isIntersecting), { threshold: .6 }).observe(stage);
+    document.addEventListener("keydown", e => {
+      if (!visible || e.repeat || e.metaKey || e.ctrlKey || e.altKey || e.target === key) return;
+      if (e.target.closest && e.target.closest("input,textarea,button,a")) return;
+      if (e.key.length === 1 || e.key === "Enter" || e.key === "Backspace") press();
+    });
+  },
+
+  /* Moor: a dock you can rearrange by dragging. */
+  dock(box, app, { h }) {
+    const stage = h("div", { class: "dock-stage" });
+    const dock = h("div", { class: "dock", role: "list", "aria-label": "A Moor dock. Drag the items to reorder them." });
+    const glyph = (body, label) => {
+      const el = h("div", { class: "dock__item", role: "listitem", "aria-label": label });
+      el.innerHTML = body; return el;
+    };
+    const items = [
+      (() => { const el = h("div", { class: "dock__item", role: "listitem", "aria-label": "Clackers" }); el.append(h("img", { src: "assets/icons/clackers.webp", alt: "" })); return el; })(),
+      glyph('<svg viewBox="0 0 48 48"><rect x="2" y="2" width="44" height="44" rx="10" fill="#3d8ff0"/><path d="M10 17a3 3 0 0 1 3-3h8l3 3h11a3 3 0 0 1 3 3v13a3 3 0 0 1-3 3H13a3 3 0 0 1-3-3z" fill="#bfe0ff"/></svg>', "Projects folder"),
+      (() => { const el = h("div", { class: "dock__item", role: "listitem", "aria-label": "Lookalike" }); el.append(h("img", { src: "assets/icons/lookalike.webp", alt: "" })); return el; })(),
+      glyph('<svg viewBox="0 0 48 48"><rect x="2" y="2" width="44" height="44" rx="10" fill="#f4f1ea"/><path d="M15 11h13l7 7v19H15z" fill="#fff" stroke="#c9c2b6"/><path d="M19 23h12M19 28h12M19 33h8" stroke="#9a948a" stroke-width="2"/></svg>', "Invoice document"),
+      glyph('<svg viewBox="0 0 48 48"><rect x="2" y="2" width="44" height="44" rx="10" fill="#f6c443"/><path d="M12 16h24M12 23h24M12 30h16" stroke="#7a5a10" stroke-width="2.4" stroke-linecap="round"/></svg>', "Notes"),
+      (() => { const el = h("div", { class: "dock__item", role: "listitem", "aria-label": "Moor" }); el.append(h("img", { src: "assets/icons/moor.webp", alt: "" })); return el; })(),
+    ];
+    items.forEach(i => dock.append(i));
+    const reset = h("button", { class: "reset", type: "button", text: "Reset", onclick: () => items.forEach(i => dock.append(i)) });
+    stage.append(dock, reset, h("p", { class: "dock-caption", text: "Drag to rearrange" }));
+    box.append(stage);
+
+    let drag = null;
+    dock.addEventListener("pointerdown", e => {
+      const it = e.target.closest(".dock__item"); if (!it) return;
+      e.preventDefault(); it.setPointerCapture(e.pointerId);
+      drag = { it, x0: e.clientX, shift: 0 }; it.classList.add("is-dragging");
+    });
+    dock.addEventListener("pointermove", e => {
+      if (!drag) return;
+      const { it } = drag;
+      it.style.transform = `translateX(${e.clientX - drag.x0 + drag.shift}px) scale(1.12)`;
+      const sibs = [...dock.children].filter(c => c !== it);
+      const cx = e.clientX;
+      let target = sibs.find(s => { const b = s.getBoundingClientRect(); return cx < b.left + b.width / 2; });
+      const before = target || null;
+      if (it.nextElementSibling === before) return;
+      // FLIP: remember where everything was, move, then animate from there.
+      const first = new Map(sibs.map(s => [s, s.getBoundingClientRect().left]));
+      const itBefore = it.getBoundingClientRect().left - (e.clientX - drag.x0 + drag.shift);
+      dock.insertBefore(it, before);
+      const itAfter = it.getBoundingClientRect().left - (e.clientX - drag.x0 + drag.shift);
+      drag.shift += itBefore - itAfter;
+      it.style.transform = `translateX(${e.clientX - drag.x0 + drag.shift}px) scale(1.12)`;
+      sibs.forEach(s => {
+        const dx = first.get(s) - s.getBoundingClientRect().left;
+        if (!dx) return;
+        s.style.transition = "none"; s.style.transform = `translateX(${dx}px)`;
+        requestAnimationFrame(() => { s.style.transition = ""; s.style.transform = ""; });
+      });
+    });
+    const end = () => { if (!drag) return; drag.it.classList.remove("is-dragging"); drag.it.style.transform = ""; drag = null; };
+    dock.addEventListener("pointerup", end); dock.addEventListener("pointercancel", end);
+  },
+
+  /* Lookalike: four takes of one moment. It drops the weak ones and circles the keeper. */
+  lookalike(box, app, { h, mark }) {
+    const set = [
+      { src: "assets/photo/pug-copy.webp", verdict: "smaller copy", alt: "A darker, low-resolution copy of the photo" },
+      { src: "assets/photo/pug-sharp.webp", verdict: "keep", alt: "The sharp photo of a pug wrapped in a blanket", keeper: true },
+      { src: "assets/photo/pug-shake.webp", verdict: "shaky", alt: "The same photo blurred by camera shake" },
+      { src: "assets/photo/pug-soft.webp", verdict: "out of focus", alt: "The same moment, out of focus" },
+    ];
+    const stage = h("div", { class: "look-stage" });
+    const figs = set.map((p, i) => {
+      const f = h("figure", { class: "look" }, h("img", { src: p.src, alt: p.alt, loading: "lazy", "data-loupe": "" }), h("figcaption", { text: p.verdict }));
+      if (p.keeper) f.append(mark(11));
+      stage.append(f); return f;
+    });
+    const replay = h("button", { class: "replay", type: "button", text: "Run again" });
+    stage.append(replay); box.append(stage);
+    let timers = [];
+    function run() {
+      timers.forEach(clearTimeout); timers = [];
+      figs.forEach(f => f.classList.remove("is-judged", "is-out", "is-keeper", "is-drawn"));
+      const order = [2, 0, 3, 1];
+      order.forEach((idx, n) => timers.push(setTimeout(() => {
+        const f = figs[idx]; f.classList.add("is-judged");
+        if (set[idx].keeper) f.classList.add("is-keeper", "is-drawn"); else f.classList.add("is-out");
+      }, 700 + n * 650)));
+    }
+    replay.addEventListener("click", run);
+    let started = false;
+    new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting && !started) { started = true; run(); } }), { threshold: .6 }).observe(stage);
+  },
+};
