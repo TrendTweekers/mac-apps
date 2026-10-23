@@ -372,6 +372,7 @@ a.store:active { transform: translateY(0); }
 .pet-stage {
   position: absolute; inset: 0; overflow: hidden;
   background: #2a3442 url("assets/photo/wall.webp") center / cover;
+  cursor: pointer;
 }
 .pet-stage::before {
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 9px;

@@ -188,6 +188,13 @@ window.DEMOS = {
       img.style.transform = `translateY(${-hop}px) scale(${face * sx}, ${sy}) rotate(${tilt * face}deg)`;
       requestAnimationFrame(frame);
     }
+    // Click anywhere in the scene: the puppy trots over to that spot.
+    stage.addEventListener("click", e => {
+      if (e.target.closest(".pet-pup")) return;
+      const r = stage.getBoundingClientRect();
+      target = Math.min(HI, Math.max(LO, (e.clientX - r.left) / r.width));
+      wait = 0;
+    });
     pup.addEventListener("click", () => {
       jumpT = 0;
       // Reduced motion: no wandering on its own, but a tap is the visitor's
