@@ -71,7 +71,27 @@ window.APPS = [
       { type: "shot", src: "assets/shots/lookalike-2.webp", alt: "Lookalike listing blurry photos found in a library." },
     ],
   },
+  {
+    id: "petlift",
+    name: "PetLift",
+    full: "PetLift: Desktop Pet",
+    line: "Your own dog or cat, lifted out of a photo, living on top of your Dock.",
+    detail: "With Pro they hop around, follow your pointer, and nap when you step away.",
+    price: "Free download. Pro is $4.99, once.",
+    store: "https://apps.apple.com/app/id6826183467",
+    support: "https://trendtweekers.github.io/petlift-mac-app/",
+    live: false,
+    icon: "assets/icons/petlift.webp",
+    demo: "pet",
+    keeper: 0,
+    note: "tap the puppy",
+    frames: [
+      { type: "demo" },
+      { type: "shot", src: "assets/shots/petlift-1.webp", alt: "Three pets standing on top of the Mac Dock." },
+      { type: "shot", src: "assets/shots/petlift-2.webp", alt: "A puppy lifted out of a photo by PetLift." },
+    ],
+  },
 ];
 
 // Blank frames at the end of the roll: apps still to come.
-window.UNEXPOSED = 3;
+window.UNEXPOSED = 2;

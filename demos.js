@@ -140,4 +140,27 @@ window.DEMOS = {
     let started = false;
     new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting && !started) { started = true; run(); } }), { threshold: .6 }).observe(stage);
   },
+
+  /* PetLift: a puppy asleep on a little Dock. Tap it and it wakes up and hops. */
+  pet(box, app, { h }) {
+    const stage = h("div", { class: "pet-stage" });
+    const shelf = h("div", { class: "pet-shelf", "aria-hidden": "true" });
+    ["petlift", "clackers", "moor", "lookalike"].forEach(n => shelf.append(h("img", { src: `assets/icons/${n}.webp`, alt: "" })));
+    const pup = h("button", { class: "pet-pup is-asleep", type: "button", "aria-label": "Tap the puppy to wake it up" },
+      h("img", { src: "assets/photo/puppy.webp", alt: "" }), h("span", { class: "pet-z", "aria-hidden": "true", text: "z z z" }));
+    const heart = h("span", { class: "pet-heart", "aria-hidden": "true" });
+    heart.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>';
+    stage.append(shelf, pup, heart); box.append(stage);
+    let x = 22, busy = false, timer = null;
+    pup.style.left = x + "%";
+    pup.addEventListener("click", () => {
+      if (busy) return;
+      busy = true; clearTimeout(timer);
+      pup.classList.remove("is-asleep");
+      heart.style.left = x + "%"; heart.classList.remove("go"); void heart.offsetWidth; heart.classList.add("go");
+      const target = x < 50 ? 70 : 22;
+      setTimeout(() => { pup.classList.add("is-hopping"); pup.classList.toggle("flip", target < x); pup.style.left = target + "%"; x = target; }, 380);
+      setTimeout(() => { pup.classList.remove("is-hopping"); busy = false; timer = setTimeout(() => pup.classList.add("is-asleep"), 6000); }, 2100);
+    });
+  },
 };
