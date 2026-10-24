@@ -392,13 +392,13 @@ a.store:active { transform: translateY(0); }
 .pet-shelf .g.notes { background: linear-gradient(#ffe37a, #f4c23c); }
 .pet-pup {
   position: absolute; bottom: calc(4% + clamp(34px, 3.3vw, 44px) - 7px);
-  width: 13%; padding: 0; border: 0; background: none; cursor: pointer;
+  width: 19%; padding: 0; border: 0; background: none; cursor: pointer;
   transform: translateX(-50%);
   -webkit-tap-highlight-color: transparent;
 }
-.pet-pup img { width: 100%; display: block; transform-origin: 50% 100%; filter: drop-shadow(0 5px 5px rgba(60, 10, 40, .3)); will-change: transform; }
+.pet-sprite { display: block; width: 100%; aspect-ratio: 395 / 280; background: url(assets/photo/shepherd-moves.webp) 100% 0 / 1900% 100% no-repeat; transform-origin: 50% 100%; filter: drop-shadow(0 5px 5px rgba(60, 10, 40, .3)); will-change: transform; }
 .pet-shade {
-  position: absolute; bottom: calc(4% + clamp(30px, 3vw, 40px)); width: 11%; height: 10px; border-radius: 50%;
+  position: absolute; bottom: calc(4% + clamp(30px, 3vw, 40px)); width: 16%; height: 10px; border-radius: 50%;
   background: radial-gradient(rgba(40, 0, 30, .35), transparent 70%); transform: translateX(-50%);
 }
 .frame:has(.cc-stage) .mark__note, .frame:has(.pet-stage) .mark__note { color: #fff; text-shadow: 0 1px 6px rgba(20, 10, 10, .7); }

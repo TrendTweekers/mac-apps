@@ -154,7 +154,7 @@ window.DEMOS = {
       notes: '<svg viewBox="0 0 64 64"><rect x="14" y="13" width="36" height="38" rx="5" fill="#fffbe9"/><path d="M20 26h24M20 33h24M20 40h16" stroke="#c9a136" stroke-width="3" stroke-linecap="round"/></svg>',
     };
     Object.entries(glyphs).forEach(([n, svg]) => { const g = h("span", { class: `g ${n}` }); g.innerHTML = svg; shelf.append(g); });
-    const pup = h("button", { class: "pet-pup", type: "button", "aria-label": "Tap the puppy to make it jump" }, h("img", { src: "assets/photo/puppy.webp", alt: "" }));
+    const pup = h("button", { class: "pet-pup", type: "button", "aria-label": "Tap the dog to make it jump" }, h("span", { class: "pet-sprite" }));
     const shade = h("span", { class: "pet-shade", "aria-hidden": "true" });
     const heart = h("span", { class: "pet-heart", "aria-hidden": "true" });
     heart.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.1 1.8-1.9 3.3-3.1 5.4-3.1 3.6 0 5.8 3.7 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>';
@@ -162,6 +162,16 @@ window.DEMOS = {
     tap.innerHTML = '<svg viewBox="-16 -16 32 32"><path d="M-3.6 -3.1L-9 -10.5M0 -4V-13M3.6 -3.1L9 -10.5"/></svg>';
     stage.append(shelf, shade, pup, heart, tap); box.append(stage);
     const img = pup.firstChild;
+    // Real-leg frames from PetLift's own rig (side photo, CC0): a walk cycle,
+    // then wag, paw-up and rest poses in a second sheet.
+    const SHEETS = { walk: ["assets/photo/shepherd-walk.webp", 24], moves: ["assets/photo/shepherd-moves.webp", 19] };
+    Object.values(SHEETS).forEach(([src]) => { new Image().src = src; });
+    let sheetNow = "", walkCycle = 0, stopT = 0;
+    function show(sheet, i) {
+      const [src, n] = SHEETS[sheet];
+      if (sheet !== sheetNow) { img.style.backgroundImage = `url(${src})`; img.style.backgroundSize = `${n * 100}% 100%`; sheetNow = sheet; }
+      img.style.backgroundPosition = `${(i / (n - 1)) * 100}% 0`;
+    }
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Positions are fractions of the stage width; speed in widths per second.
     let x = 0.42, v = 0, target = 0.42, wait = 1.2, stride = 0, face = 1, jumpT = -1, visible = false, last = 0, t = 0;
@@ -177,16 +187,24 @@ window.DEMOS = {
         v = rem <= brake + 0.002 ? Math.max(0, v - ACC * dt) : Math.min(MAX, v + ACC * dt);
         const step = Math.min(rem, v * dt);
         x += (target > x ? 1 : -1) * step; stride += step / 0.05;
+        // Legs move with distance (about 0.29 body-heights per cycle), so paws do not slide.
+        walkCycle += step * stage.clientWidth / Math.max(20, 0.29 * pup.clientHeight);
         face = target > x ? 1 : -1;
         if (v < 0.002 && rem < 0.004) { v = 0; wait = still ? 1 : 1.5 + Math.random() * 2.5; }
       }
+      // The legs do the walking now; the body only rides a little.
       const k = Math.min(1, v / MAX), p = stride % 1;
-      let hop = Math.sin(Math.PI * p) * 7 * k, sx = 1, sy = 1, tilt = Math.sin(p * Math.PI * 2) * 2.5 * k;
-      if (p < 0.12 || p > 0.88) { sx += 0.05 * k; sy -= 0.07 * k; } else { sx -= 0.03 * k; sy += 0.04 * k; }
-      if (v === 0) { const b = Math.sin(t * 2.6); sx += 0.01 * b; sy -= 0.015 * b; }
-      // Typing: the puppy sits and pats along, one paw then the other.
+      let hop = 0, sx = 1, sy = 1, tilt = Math.sin(p * Math.PI * 2) * 0.8 * k;
+      // Typing: the dog lifts one paw, then the other.
       pat = Math.max(0, pat - dt * 7);
-      if (pat > 0) { sx += 0.05 * pat; sy -= 0.085 * pat; tilt += -3 + (patLeft ? 4.5 : -4.5) * pat; }
+      if (pat > 0) { sx += 0.02 * pat; sy -= 0.034 * pat; }
+      if (v > 0) { stopT = 0; show("walk", Math.floor(walkCycle * 24) % 24); }
+      else {
+        stopT += dt;
+        if (pat > 0.08) show("moves", patLeft ? 16 : 17);
+        else if (stopT < 2.4) show("moves", Math.floor(t * 1.4 * 16) % 16);   // wag after stopping
+        else show("moves", 18);
+      }
       tap.style.left = ((x + face * 0.082) * 100) + "%";
       tap.style.opacity = Math.min(1, pat * 1.4);
       tap.style.transform = `translateX(-50%) scale(${0.7 + 0.5 * (1 - pat)})`;
@@ -197,7 +215,7 @@ window.DEMOS = {
       img.style.transform = `translateY(${-hop}px) scale(${face * sx}, ${sy}) rotate(${tilt * face}deg)`;
       requestAnimationFrame(frame);
     }
-    // Click anywhere in the scene: the puppy trots over to that spot.
+    // Click anywhere in the scene: the dog walks over to that spot.
     stage.addEventListener("click", e => {
       if (e.target.closest(".pet-pup")) return;
       const r = stage.getBoundingClientRect();
